@@ -63,53 +63,59 @@ int main(int argc, char *argv[]){
 
 	// init ROS
 	ros::init(argc, argv, "joystick");
-	
+
 	int joy_num = 0;
 	float hz = 30.0;
-	
+	int dz = 130;
+
 	//--- Handle commandline options ---------------------------------------------
 	po::options_description desc("Allowed options");
     desc.add_options()
         ("help", "produce help message")
         ("num", po::value<int>(),"which joystick to use, default is 0")
         ("hz", po::value<float>(), "polling frequency in Hz, default is 30 Hz")
+				("dz", po::value<int>(), "dead zone, default is 130")
         ;
-    po::variables_map vm;       
+    po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
-    po::notify(vm);   
-    
+    po::notify(vm);
+
     if (vm.count("help")) {
         //std::cout << "rosrun ahrs ahrs [option] \n";
         //std::cout << "    default topic in [imu] out [imu_out] \n";
         std::cout << desc << "\n";
         return 0;
     }
-    
+
     if (vm.count("num")){
         joy_num = vm["num"].as<int>();
     }
-    
+
     if (vm.count("hz")){
         hz = vm["hz"].as<float>();
     }
-    
+
+		if (vm.count("dz")){
+        dz = vm["dz"].as<int>();
+    }
+
     // init the SDL2 library
-    // Initialize SDL (Note: video is required to start event loop) 
+    // Initialize SDL (Note: video is required to start event loop)
     if (SDL_Init(SDL_INIT_JOYSTICK) < 0) {
         ROS_ERROR("[-] Failed to initialize SDL2: %s", SDL_GetError());
         exit(1);
     }
-    
+
     //-------------------------------------------------------------------------------
-    
+
     JoyStick js(joy_num);
+		js.setDeadZone(dz);
     js.setUpPublisher();
     js.spin(hz);
-    
+
     // Shut things down
     SDL_QuitSubSystem(SDL_INIT_JOYSTICK);
 
     // Exit program
     return 0;
 }
-
